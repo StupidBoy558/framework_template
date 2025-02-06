@@ -1,7 +1,16 @@
 package com.geektime.ratelimiter.rule;
 
 /**
- * @Description: 限流规则
+ * @Description: API限流规则配置类
+ * 该类定义了单个API的限流规则，包含以下属性：
+ * - appId: 应用标识，用于区分不同的调用方
+ * - api: API路径，用于标识具体的接口
+ * - limit: 时间窗口内允许的最大请求数
+ * - unit: 时间窗口大小，以秒为单位
+ * 
+ * 使用示例：
+ * ApiLimit limit = new ApiLimit("app1", "/api/v1/user", 100, 1); // 每秒限制100次请求
+ * 
  * @Author: dansheng
  * @CreateTime: 2025/2/6 17:03
  **/

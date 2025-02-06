@@ -4,7 +4,19 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @Description: 限流规则
+ * @Description: 限流规则管理类
+ * 该类负责管理所有API的限流规则，提供规则的增删改查功能。
+ * 使用ConcurrentHashMap保证线程安全，支持高并发访问。
+ * 
+ * 使用示例：
+ * RuleConfig config = new RuleConfig();
+ * List<ApiLimit> limits = new ArrayList<>();
+ * limits.add(new ApiLimit("app1", "/api/v1/user", 100, 1));
+ * config.setLimits(limits);
+ * 
+ * RateLimitRule rule = new RateLimitRule(config);
+ * ApiLimit limit = rule.getLimit("app1", "/api/v1/user");
+ * 
  * @Author: dansheng
  * @CreateTime: 2025/2/6 17:04
  **/

@@ -46,7 +46,7 @@ public class RateLimiter {
         this.rule = new RateLimitRule(ruleConfig);
     }
 
-    public boolean limit(String appId, String url) throws InternalErrorException {
+    public boolean limit(String appId, String url) {
         ApiLimit apiLimit = rule.getLimit(appId, url);
         if (apiLimit == null) {
             return true;
