@@ -1,10 +1,11 @@
 package com.geektime.ratelimiter.rule.parser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.alibaba.fastjson2.JSON;
 import com.geektime.ratelimiter.rule.RuleConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @Description: JSON格式规则配置解析器
@@ -12,11 +13,6 @@ import java.io.InputStream;
  * @CreateTime: 2025/2/6 17:04
  **/
 public class JsonRuleConfigParser implements RuleConfigParser {
-    private final ObjectMapper objectMapper;
-
-    public JsonRuleConfigParser() {
-        this.objectMapper = new ObjectMapper();
-    }
 
     @Override
     public RuleConfig parse(InputStream in) {
@@ -24,7 +20,9 @@ public class JsonRuleConfigParser implements RuleConfigParser {
             return null;
         }
         try {
-            return objectMapper.readValue(in, RuleConfig.class);
+            byte[] bytes = in.readAllBytes();
+            String content = new String(bytes, StandardCharsets.UTF_8);
+            return JSON.parseObject(content, RuleConfig.class);
         } catch (IOException e) {
             throw new RuntimeException("Parse json rule config error", e);
         }
@@ -35,10 +33,6 @@ public class JsonRuleConfigParser implements RuleConfigParser {
         if (configText == null || configText.isEmpty()) {
             return null;
         }
-        try {
-            return objectMapper.readValue(configText, RuleConfig.class);
-        } catch (IOException e) {
-            throw new RuntimeException("Parse json rule config error", e);
-        }
+        return JSON.parseObject(configText, RuleConfig.class);
     }
 } 
