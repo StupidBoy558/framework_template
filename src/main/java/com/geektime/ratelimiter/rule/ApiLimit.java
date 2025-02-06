@@ -6,21 +6,24 @@ package com.geektime.ratelimiter.rule;
  * @CreateTime: 2025/2/6 17:03
  **/
 public class ApiLimit {
-    private static final int DEFAULT_TIME_UNIT = 1; // 1 second
+    private String appId;
     private String api;
     private int limit;
-    private int unit = DEFAULT_TIME_UNIT;
+    private long unit; // 时间单位，以秒为单位
 
-    public ApiLimit() {}
-
-    public ApiLimit(String api, int limit) {
-        this(api, limit, DEFAULT_TIME_UNIT);
-    }
-
-    public ApiLimit(String api, int limit, int unit) {
+    public ApiLimit(String appId, String api, int limit, long unit) {
+        this.appId = appId;
         this.api = api;
         this.limit = limit;
         this.unit = unit;
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    public void setAppId(String appId) {
+        this.appId = appId;
     }
 
     public String getApi() {
@@ -39,11 +42,11 @@ public class ApiLimit {
         this.limit = limit;
     }
 
-    public int getUnit() {
+    public long getUnit() {
         return unit;
     }
 
-    public void setUnit(int unit) {
+    public void setUnit(long unit) {
         this.unit = unit;
     }
 }

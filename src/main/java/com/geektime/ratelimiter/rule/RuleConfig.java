@@ -9,42 +9,14 @@ import java.util.List;
  **/
 
 public class RuleConfig {
-    private List<AppRuleConfig> configs;
+    private List<ApiLimit> limits;
 
-    public List<AppRuleConfig> getConfigs() {
-        return configs;
+    public List<ApiLimit> getLimits() {
+        return limits;
     }
 
-    public void setConfigs(List<AppRuleConfig> configs) {
-        this.configs = configs;
-    }
-
-    public static class AppRuleConfig {
-        private String appId;
-        private List<ApiLimit> limits;
-
-        public AppRuleConfig() {}
-
-        public AppRuleConfig(String appId, List<ApiLimit> limits) {
-            this.appId = appId;
-            this.limits = limits;
-        }
-
-        public List<ApiLimit> getLimits() {
-            return limits;
-        }
-
-        public String getAppId() {
-            return appId;
-        }
-
-        public void setAppId(String appId) {
-            this.appId = appId;
-        }
-
-        public void setLimits(List<ApiLimit> limits) {
-            this.limits = limits;
-        }
+    public void setLimits(List<ApiLimit> limits) {
+        this.limits = limits;
     }
 }
 
