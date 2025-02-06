@@ -1,5 +1,7 @@
 package com.geektime.ratelimiter.alg;
 
+import com.geektime.ratelimiter.exception.InternalErrorException;
+
 /**
  * @Description: 限流算法接口
  * @Author: dansheng

@@ -4,6 +4,7 @@ import com.geektime.ratelimiter.alg.FixedTimeWinRateLimitAlg;
 import com.geektime.ratelimiter.alg.RateLimitAlg;
 import com.geektime.ratelimiter.rule.ApiLimit;
 import com.geektime.ratelimiter.rule.RateLimitRule;
+import com.geektime.ratelimiter.rule.RuleConfig;
 import com.geektime.ratelimiter.rule.TrieRateLimitRule;
 import com.geektime.ratelimiter.rule.datasource.FileRuleConfigSource;
 import com.geektime.ratelimiter.rule.datasource.RuleConfigSource;
@@ -24,9 +25,10 @@ public class RateLimiter {
     private final RateLimitRule rule;
 
     public RateLimiter() {
-        // 从配置文件加载限流规则
-        RuleConfigSource configSource = new FileRuleConfigSource("/ratelimiter-rule.yaml");
-        rule = new TrieRateLimitRule(configSource.load());
+        //调用RuleConfigSource类来实现配置加载
+        RuleConfigSource configSource = new FileRuleConfigSource();
+        RuleConfig ruleConfig = configSource.load();
+        this.rule = new TrieRateLimitRule(ruleConfig);
     }
 
     public boolean limit(String appId, String url) throws Exception {

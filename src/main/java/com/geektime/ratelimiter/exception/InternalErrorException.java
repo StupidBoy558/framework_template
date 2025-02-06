@@ -1,4 +1,4 @@
-package com.geektime.ratelimiter.alg;
+package com.geektime.ratelimiter.exception;
 
 /**
  * @Description: 限流器内部错误异常

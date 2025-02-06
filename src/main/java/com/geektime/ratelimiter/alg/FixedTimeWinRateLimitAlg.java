@@ -1,5 +1,6 @@
 package com.geektime.ratelimiter.alg;
 
+import com.geektime.ratelimiter.exception.InternalErrorException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 

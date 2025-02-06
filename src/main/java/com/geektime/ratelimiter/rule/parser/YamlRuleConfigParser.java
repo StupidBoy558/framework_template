@@ -11,12 +11,25 @@ import java.io.InputStream;
  * @CreateTime: 2025/2/6 17:04
  **/
 public class YamlRuleConfigParser implements RuleConfigParser {
+    private final Yaml yaml;
+
+    public YamlRuleConfigParser() {
+        this.yaml = new Yaml();
+    }
+
     @Override
     public RuleConfig parse(InputStream in) {
         if (in == null) {
             return null;
         }
-        Yaml yaml = new Yaml();
         return yaml.loadAs(in, RuleConfig.class);
+    }
+
+    @Override
+    public RuleConfig parse(String configText) {
+        if (configText == null || configText.isEmpty()) {
+            return null;
+        }
+        return yaml.loadAs(configText, RuleConfig.class);
     }
 } 

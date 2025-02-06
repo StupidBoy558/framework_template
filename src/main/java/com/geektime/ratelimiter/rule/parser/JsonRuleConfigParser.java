@@ -29,4 +29,16 @@ public class JsonRuleConfigParser implements RuleConfigParser {
             throw new RuntimeException("Parse json rule config error", e);
         }
     }
+
+    @Override
+    public RuleConfig parse(String configText) {
+        if (configText == null || configText.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(configText, RuleConfig.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Parse json rule config error", e);
+        }
+    }
 } 

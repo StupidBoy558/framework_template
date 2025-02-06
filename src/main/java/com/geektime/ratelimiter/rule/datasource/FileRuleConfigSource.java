@@ -34,6 +34,10 @@ public class FileRuleConfigSource implements RuleConfigSource {
         this.configFile = configFile;
     }
 
+    public FileRuleConfigSource() {
+        this("ratelimiter-rule.yaml");
+    }
+
     @Override
     public RuleConfig load() {
         String fileExtension = getFileExtension(configFile);

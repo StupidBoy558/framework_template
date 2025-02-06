@@ -16,4 +16,11 @@ public interface RuleConfigParser {
      * @return 规则配置对象
      */
     RuleConfig parse(InputStream in);
+
+    /**
+     * 解析配置文本
+     * @param configText 配置文本
+     * @return 规则配置对象
+     */
+    RuleConfig parse(String configText);
 } 
