@@ -1,14 +1,16 @@
 package com.geektime.ratelimiter;
 
+import com.geektime.ratelimiter.alg.FixedTimeWinRateLimitAlg;
 import com.geektime.ratelimiter.alg.RateLimitAlg;
 import com.geektime.ratelimiter.rule.ApiLimit;
 import com.geektime.ratelimiter.rule.RateLimitRule;
 import com.geektime.ratelimiter.rule.RuleConfig;
+import com.geektime.ratelimiter.rule.TrieRateLimitRule;
+import com.geektime.ratelimiter.rule.datasource.FileRuleConfigSource;
+import com.geektime.ratelimiter.rule.datasource.RuleConfigSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -18,37 +20,23 @@ import java.util.concurrent.ConcurrentHashMap;
  **/
 public class RateLimiter {
     private static final Logger log = LoggerFactory.getLogger(RateLimiter.class);
+    
     // 为每个api在内存中存储限流计数器
-    private ConcurrentHashMap<String, RateLimitAlg> counters = new ConcurrentHashMap<>();
-    private RateLimitRule rule;
+    private final ConcurrentHashMap<String, RateLimitAlg> counters = new ConcurrentHashMap<>();
+    private final RateLimitRule rule;
 
     public RateLimiter() {
-        // 将限流规则配置文件ratelimiter-rule.yaml中的内容读取到RuleConfig中
-        InputStream in = null;
-        RuleConfig ruleConfig = null;
-        try {
-            in = this.getClass().getResourceAsStream("/ratelimiter-rule.yaml");
-            if (in != null) {
-                Yaml yaml = new Yaml();
-                ruleConfig = yaml.loadAs(in, RuleConfig.class);
-            }
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    log.error("close file error:{}", e);
-                }
-            }
-        }
-
-        // 将限流规则构建成支持快速查找的数据结构RateLimitRule
-        this.rule = new RateLimitRule(ruleConfig);
+        //调用RuleConfigSource类来实现配置加载
+        RuleConfigSource configSource = new FileRuleConfigSource();
+        RuleConfig ruleConfig = configSource.load();
+        log.info("Loaded rate limit rules: {}", ruleConfig);
+        this.rule = new TrieRateLimitRule(ruleConfig);
     }
 
-    public boolean limit(String appId, String url) throws InternalErrorException {
+    public boolean limit(String appId, String url) {
         ApiLimit apiLimit = rule.getLimit(appId, url);
         if (apiLimit == null) {
+            log.warn("No rate limit rule found for appId: {}, url: {}", appId, url);
             return true;
         }
 
@@ -56,7 +44,10 @@ public class RateLimiter {
         String counterKey = appId + ":" + apiLimit.getApi();
         RateLimitAlg rateLimitCounter = counters.get(counterKey);
         if (rateLimitCounter == null) {
-            RateLimitAlg newRateLimitCounter = new RateLimitAlg(apiLimit.getLimit());
+            log.info("Creating new rate limiter for appId: {}, url: {}, limit: {}, unit: {}s", 
+                    appId, url, apiLimit.getLimit(), apiLimit.getUnit());
+            RateLimitAlg newRateLimitCounter = new FixedTimeWinRateLimitAlg(
+                    apiLimit.getLimit(), apiLimit.getUnit() * 1000);
             rateLimitCounter = counters.putIfAbsent(counterKey, newRateLimitCounter);
             if (rateLimitCounter == null) {
                 rateLimitCounter = newRateLimitCounter;
@@ -64,6 +55,14 @@ public class RateLimiter {
         }
 
         // 判断是否限流
-        return rateLimitCounter.tryAcquire();
+        boolean acquired = rateLimitCounter.tryAcquire();
+        if (!acquired) {
+            log.warn("Rate limit exceeded for appId: {}, url: {}, current count: {}", 
+                    appId, url, rateLimitCounter.getCurrentCount());
+        } else {
+            log.debug("Request accepted for appId: {}, url: {}, current count: {}", 
+                    appId, url, rateLimitCounter.getCurrentCount());
+        }
+        return acquired;
     }
 }
