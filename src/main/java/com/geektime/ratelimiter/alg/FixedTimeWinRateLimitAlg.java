@@ -3,6 +3,8 @@ package com.geektime.ratelimiter.alg;
 import com.geektime.ratelimiter.exception.InternalErrorException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,6 +18,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @CreateTime: 2025/2/6 17:06
  **/
 public class FixedTimeWinRateLimitAlg implements RateLimitAlg {
+    private static final Logger log = LoggerFactory.getLogger(FixedTimeWinRateLimitAlg.class);
     private static final long TRY_LOCK_TIMEOUT = 200L;  // 200ms.
     private final Stopwatch stopwatch;
     private final AtomicInteger currentCount = new AtomicInteger(0);
@@ -45,6 +48,7 @@ public class FixedTimeWinRateLimitAlg implements RateLimitAlg {
         this.windowSizeInMs = windowSizeInMs;
         this.stopwatch = stopwatch;
         this.lastResetTime = new AtomicLong(stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        log.info("Created FixedTimeWinRateLimitAlg with limit: {}, window size: {}ms", limit, windowSizeInMs);
     }
 
     @Override
@@ -62,8 +66,10 @@ public class FixedTimeWinRateLimitAlg implements RateLimitAlg {
                         if (currentTime - lastReset > windowSizeInMs) {
                             // 处理时钟回拨
                             if (currentTime < lastReset) {
+                                log.error("Clock moved backwards, currentTime: {}, lastReset: {}", currentTime, lastReset);
                                 throw new InternalErrorException("Clock moved backwards");
                             }
+                            log.debug("Resetting counter, old count: {}", currentCount.get());
                             currentCount.set(0);
                             lastResetTime.set(currentTime);
                         }
@@ -71,9 +77,11 @@ public class FixedTimeWinRateLimitAlg implements RateLimitAlg {
                         lock.unlock();
                     }
                 } else {
+                    log.warn("Failed to acquire lock within {}ms", TRY_LOCK_TIMEOUT);
                     throw new InternalErrorException("tryAcquire() wait lock too long:" + TRY_LOCK_TIMEOUT + "ms");
                 }
             } catch (InterruptedException e) {
+                log.error("Lock acquisition interrupted", e);
                 throw new InternalErrorException("tryAcquire() is interrupted by lock-time-out.", e);
             }
         }
@@ -81,11 +89,13 @@ public class FixedTimeWinRateLimitAlg implements RateLimitAlg {
         // 尝试增加计数
         int updatedCount = currentCount.incrementAndGet();
         if (updatedCount <= limit) {
+            log.debug("Request accepted, current count: {}/{}", updatedCount, limit);
             return true;
         }
 
         // 超过限制，将计数减回去
         currentCount.decrementAndGet();
+        log.debug("Request rejected, current count: {}/{}", currentCount.get(), limit);
         return false;
     }
 
@@ -99,6 +109,7 @@ public class FixedTimeWinRateLimitAlg implements RateLimitAlg {
         long currentTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
         long lastReset = lastResetTime.get();
         if (currentTime < lastReset) {
+            log.warn("Clock moved backwards, returning 0 for time to next window");
             return 0; // 时钟回拨情况下，立即重置
         }
         return Math.max(0, windowSizeInMs - (currentTime - lastReset));
